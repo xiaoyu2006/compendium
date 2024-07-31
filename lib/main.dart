@@ -9,7 +9,7 @@ import 'cameratab.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(CompendiumApp());
+  runApp(const CompendiumApp());
 }
 
 class CompendiumApp extends StatelessWidget {
@@ -23,7 +23,7 @@ class CompendiumApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         useMaterial3: true,
       ),
-      home: HomeTabController(),
+      home: const HomeTabController(),
     );
   }
 }
@@ -61,11 +61,11 @@ class _HomeTabControllerState extends State<HomeTabController> {
         onDestinationSelected: _onItemTapped,
         destinations: const <NavigationDestination>[
           NavigationDestination(
-            icon: Icon(Icons.photo_camera),
-            label: 'Camera',
+            icon: Icon(Icons.library_add),
+            label: 'New Entry',
           ),
           NavigationDestination(
-            icon: Icon(Icons.photo_album),
+            icon: Icon(Icons.photo_library),
             label: 'Album',
           ),
         ],
