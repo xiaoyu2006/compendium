@@ -1,0 +1,5 @@
+- [ ] Performance improvements on image display: Image thumbnail in DB, image in FS
+- [ ] Details page on images
+- [ ] Compendium management
+  - [ ] Delete images
+  - [ ] Item history?

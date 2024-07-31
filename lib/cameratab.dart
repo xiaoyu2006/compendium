@@ -1,11 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
+
+import 'model.dart';
 
 class CameraTab extends StatelessWidget {
   const CameraTab({super.key});
@@ -77,7 +77,8 @@ class ConfirmPictureScreen extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ServiceQuery(imagePath: imagePath)),
+            MaterialPageRoute(
+                builder: (context) => ServiceQuery(imagePath: imagePath)),
           );
         },
         tooltip: 'Confirm',
@@ -100,17 +101,19 @@ class ServiceQuery extends StatefulWidget {
 class _ServiceQueryState extends State<ServiceQuery> {
   late final Future<String> response = () async {
     final request = http.MultipartRequest(
-      'POST', Uri.parse("https://compendium.ycao.top/query/"),
+      'POST',
+      Uri.parse("https://compendium.ycao.top/query/"),
     );
-    request.files.add(await http.MultipartFile.fromPath('file', widget.imagePath));
+    request.files
+        .add(await http.MultipartFile.fromPath('file', widget.imagePath));
     final response = await request.send();
     return response.stream.bytesToString();
-  } ();
+  }();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detecting...')),
+      appBar: AppBar(title: const Text('Detection')),
       body: FutureBuilder<String>(
         future: response,
         builder: (context, snapshot) {
@@ -120,7 +123,23 @@ class _ServiceQueryState extends State<ServiceQuery> {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          return Center(child: Text('Response: ${snapshot.data}'));
+          final responseJson =
+              jsonDecode(snapshot.data!) as Map<String, dynamic>;
+          return Scaffold(
+            body: Center(child: Text('Response: ${snapshot.data}')),
+            floatingActionButton: FloatingActionButton(
+                onPressed: () => (context) async {
+                      final newEntry = await CompendiumEntry.fromResponse(
+                        responseJson["response"],
+                        widget.imagePath,
+                      );
+                      await CompendiumDBManager().insert(newEntry);
+                      Navigator.of(context)
+                        ..pop()
+                        ..pop();
+                    }(context),
+                child: const Icon(Icons.library_add)),
+          );
         },
       ),
     );

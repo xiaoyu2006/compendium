@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:camera/camera.dart';
+import 'package:compendium/model.dart';
 import 'package:flutter/material.dart';
 
 import 'albumtab.dart';
@@ -8,7 +8,6 @@ import 'cameratab.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const CompendiumApp());
 }
 
