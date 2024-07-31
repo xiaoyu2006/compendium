@@ -28,29 +28,47 @@ class CompendiumApp extends StatelessWidget {
   }
 }
 
-class HomeTabController extends StatelessWidget {
+class HomeTabController extends StatefulWidget {
   const HomeTabController({super.key});
 
   @override
+  State<HomeTabController> createState() => _HomeTabControllerState();
+}
+
+class _HomeTabControllerState extends State<HomeTabController> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _widgetOptions = <Widget>[
+    CameraTab(),
+    AlbumTab(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Compendium"),
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.photo_camera)),
-              Tab(icon: Icon(Icons.photo_album)),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Compendium"),
+      ),
+      body: _widgetOptions.elementAt(_selectedIndex),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: const <NavigationDestination>[
+          NavigationDestination(
+            icon: Icon(Icons.photo_camera),
+            label: 'Camera',
           ),
-        ),
-        body: const TabBarView(
-          children: [
-            CameraTab(),
-            AlbumTab(),
-          ],
-        ),
+          NavigationDestination(
+            icon: Icon(Icons.photo_album),
+            label: 'Album',
+          ),
+        ],
       ),
     );
   }
