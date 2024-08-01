@@ -75,6 +75,7 @@ class ConfirmPictureScreen extends StatelessWidget {
       body: Center(child: Image.file(File(imagePath))),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          Navigator.pop(context);
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -124,24 +125,133 @@ class _ServiceQueryState extends State<ServiceQuery> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           final responseJson =
-              jsonDecode(snapshot.data!) as Map<String, dynamic>;
-          return Scaffold(
-            body: Center(child: Text('Response: ${snapshot.data}')),
-            floatingActionButton: FloatingActionButton(
-                onPressed: () => (context) async {
-                      final newEntry = await CompendiumEntry.fromResponse(
-                        responseJson["response"],
-                        widget.imagePath,
-                      );
-                      await CompendiumDBManager().insert(newEntry);
-                      Navigator.of(context)
-                        ..pop()
-                        ..pop();
-                    }(context),
-                child: const Icon(Icons.library_add)),
+              (jsonDecode(snapshot.data!) as Map<String, dynamic>)["response"];
+          return ShowResponse(
+            responseJson: responseJson,
+            imagePath: widget.imagePath,
           );
         },
       ),
     );
+  }
+}
+
+class ShowResponse extends StatelessWidget {
+  const ShowResponse({
+    super.key,
+    required this.responseJson,
+    required this.imagePath,
+  });
+
+  final Map<String, dynamic> responseJson;
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ImageWithRect(
+              imagePath: imagePath,
+              x1: responseJson['x1'],
+              y1: responseJson['y1'],
+              x2: responseJson['x2'],
+              y2: responseJson['y2']),
+          Text(responseJson.toString()),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () => (context) async {
+                final newEntry = await CompendiumEntry.fromResponse(
+                  responseJson,
+                  imagePath,
+                );
+                await CompendiumDBManager().insert(newEntry);
+                Navigator.pop(context);
+              }(context),
+          child: const Icon(Icons.library_add)),
+    );
+  }
+}
+
+class ImageWithRect extends StatefulWidget {
+  const ImageWithRect({
+    super.key,
+    required this.imagePath,
+    required this.x1,
+    required this.y1,
+    required this.x2,
+    required this.y2,
+  });
+
+  final String imagePath;
+  final double x1;
+  final double y1;
+  final double x2;
+  final double y2;
+
+  @override
+  State<ImageWithRect> createState() => _ImageWithRectState();
+}
+
+class _ImageWithRectState extends State<ImageWithRect> {
+  final GlobalKey _imageKey = GlobalKey();
+  OverlayEntry? _overlayEntry;
+
+  @override
+  void dispose() {
+    _overlayEntry?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showOverlay();
+    });
+
+    return Stack(
+      children: [
+        Image.file(
+          File(widget.imagePath),
+          key: _imageKey,
+        ),
+      ],
+    );
+  }
+
+  void _showOverlay() {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+    }
+
+    final RenderBox renderBox =
+        _imageKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final x = widget.x1 * size.width;
+    final y = widget.y1 * size.height;
+    final w = (widget.x2 - widget.x1) * size.width;
+    final h = (widget.y2 - widget.y1) * size.height;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: position.dx + x,
+        top: position.dy + y, // Adjust the position as needed
+        child: Container(
+          width: w, // Adjust the size as needed
+          height: h, // Adjust the size as needed
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.red,
+              width: 3,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
   }
 }
