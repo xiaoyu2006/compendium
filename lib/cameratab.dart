@@ -108,6 +108,10 @@ class _ServiceQueryState extends State<ServiceQuery> {
     request.files
         .add(await http.MultipartFile.fromPath('file', widget.imagePath));
     final response = await request.send();
+    // Throw error for non-200 status code
+    if (response.statusCode != 200) {
+      throw Exception('Failed to query service: ${response.statusCode}, ${response.reasonPhrase}');
+    }
     return response.stream.bytesToString();
   }();
 
@@ -238,10 +242,10 @@ class _ImageWithRectState extends State<ImageWithRect> {
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         left: position.dx + x,
-        top: position.dy + y, // Adjust the position as needed
+        top: position.dy + y,
         child: Container(
-          width: w, // Adjust the size as needed
-          height: h, // Adjust the size as needed
+          width: w,
+          height: h,
           decoration: BoxDecoration(
             border: Border.all(
               color: Colors.red,
