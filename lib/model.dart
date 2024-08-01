@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:image/image.dart';
 
 class CompendiumEntry {
   final String imageBase64;
@@ -36,7 +38,20 @@ class CompendiumEntry {
 
   static Future<CompendiumEntry> fromResponse(Map<String, dynamic> map, String imagePath) async {
     final bytes = await File(imagePath).readAsBytes();
-    final imageBase64 = base64Encode(bytes);
+    final image = decodeImage(bytes)!;
+    late final compressedImage;
+    // max width or height is 512px
+    if (image.width > 512 || image.height > 512) {
+      if (image.width > image.height) {
+        compressedImage = copyResize(image, width: 512);
+      } else {
+        compressedImage = copyResize(image, height: 512);
+      }
+    } else {
+      compressedImage = image;
+    }
+    final compressedImageBytes = encodePng(compressedImage);
+    final imageBase64 = base64Encode(compressedImageBytes);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return CompendiumEntry(
       imageBase64: imageBase64,
@@ -86,9 +101,18 @@ class CompendiumDBManager {
   // Also use this to update entries
   Future<int> insert(CompendiumEntry entry) async {
     final Database db = await _instance.db;
+    final entryToInsert = CompendiumEntry(
+      imageBase64: entry.imageBase64,
+      wikipediaEntry: entry.wikipediaEntry.toLowerCase(),
+      bboxUpperLeftX: entry.bboxUpperLeftX,
+      bboxUpperLeftY: entry.bboxUpperLeftY,
+      bboxLowerRightX: entry.bboxLowerRightX,
+      bboxLowerRightY: entry.bboxLowerRightY,
+      recordTimestamp: entry.recordTimestamp,
+    );
     return db.insert(
       'compendium_entries',
-      entry.toMap(),
+      entryToInsert.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:compendium/model.dart';
 import 'package:flutter/material.dart';
 
 import 'albumtab.dart';
